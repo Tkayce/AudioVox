@@ -14,6 +14,8 @@ declare module '@react-native-community/slider' {
     thumbTintColor?: string; // color for the thumb on supported platforms
     disabled?: boolean;
     step?: number;
+    onSlidingStart?: (value: number) => void;
+    onSlidingComplete?: (value: number) => void;
   }
 
   export default class Slider extends Component<SliderProps> {}

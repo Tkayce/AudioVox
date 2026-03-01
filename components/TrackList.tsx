@@ -16,8 +16,11 @@ export const TrackList: React.FC<TrackListProps> = ({
   isDark = false,
   onTrackSelect 
 }) => {
-  const { currentTrack, setCurrentTrack, setCurrentIndex, setPlaylist } = useAudioStore();
-  const { initializePlayer, play, pause, switchToTrack } = useLocalAudio();
+  const currentTrack = useAudioStore((state) => state.currentTrack);
+  const setCurrentTrack = useAudioStore((state) => state.setCurrentTrack);
+  const setCurrentIndex = useAudioStore((state) => state.setCurrentIndex);
+  const setPlaylist = useAudioStore((state) => state.setPlaylist);
+  const { switchToTrack } = useLocalAudio();
 
   // Safety check for tracks array
   const safeTracks = tracks || [];
@@ -29,25 +32,17 @@ export const TrackList: React.FC<TrackListProps> = ({
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const handleTrackPress = async (track: Track, index: number) => {
-    try {
-      console.log('=== TRACK SELECTION ===', track.title, 'at index:', index);
-      
-      // Set up playlist and track state first
-      setPlaylist(safeTracks);
-      setCurrentIndex(index);
-      setCurrentTrack(track);
-      
-      console.log('Switching to track:', track.title);
-      
-      // Use explicit track switching with auto-play for library selection
-      await switchToTrack(track, { autoPlay: true });
-      
-      if (onTrackSelect) {
-        onTrackSelect(track, index);
-      }
-    } catch (error) {
-      console.error('Error selecting track:', error);
+  const handleTrackPress = (track: Track, index: number) => {
+    // Set up playlist and track state first
+    setPlaylist(safeTracks);
+    setCurrentIndex(index);
+    setCurrentTrack(track);
+    
+    // Use explicit track switching with auto-play for library selection
+    void switchToTrack(track, { autoPlay: true });
+    
+    if (onTrackSelect) {
+      onTrackSelect(track, index);
     }
   };
 
@@ -93,7 +88,8 @@ export const TrackList: React.FC<TrackListProps> = ({
                 ? 'text-orange-600'
                 : (isDark ? 'text-white' : 'text-gray-900')
             }`}
-            numberOfLines={1}
+            numberOfLines={2}
+            ellipsizeMode="tail"
           >
             {track.title}
           </Text>
@@ -102,6 +98,7 @@ export const TrackList: React.FC<TrackListProps> = ({
               isDark ? 'text-gray-400' : 'text-gray-600'
             }`}
             numberOfLines={1}
+            ellipsizeMode="tail"
           >
             {track.artist}
           </Text>

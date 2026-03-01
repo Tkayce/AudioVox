@@ -3,7 +3,7 @@ import { Tabs } from 'expo-router';
 import { useAudioStore } from '../../store/audioStore';
 
 export default function TabLayout() {
-  const { isDarkMode } = useAudioStore();
+  const isDarkMode = useAudioStore((state) => state.isDarkMode);
 
   return (
     <Tabs

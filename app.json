@@ -35,7 +35,8 @@
         "android.permission.MODIFY_AUDIO_SETTINGS"
       ],
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.teetech.AudioVox"
     },
     "web": {
       "output": "static",

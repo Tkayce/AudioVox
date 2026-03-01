@@ -10,51 +10,33 @@ interface PlayerControlsProps {
 }
 
 export const PlayerControls: React.FC<PlayerControlsProps> = ({ isDark = false }) => {
-  const { 
-    isPlaying, 
-    isBuffering, 
-    playbackRate,
-    currentTrack,
-    nextTrack,
-    previousTrack 
-  } = useAudioStore();
+  const isPlaying = useAudioStore((state) => state.isPlaying);
+  const isBuffering = useAudioStore((state) => state.isBuffering);
+  const playbackRate = useAudioStore((state) => state.playbackRate);
+  const currentTrack = useAudioStore((state) => state.currentTrack);
+  const nextTrack = useAudioStore((state) => state.nextTrack);
+  const previousTrack = useAudioStore((state) => state.previousTrack);
   
-  const { play, pause, setPlaybackRate, switchToTrack, status } = useLocalAudio();
+  const { play, pause, setPlaybackRate, switchToTrack, togglePlayPause } = useLocalAudio();
 
-  const handleNext = async () => {
-    console.log('=== NEXT BUTTON PRESSED ===');
+  const handleNext = () => {
     nextTrack(); // Update store state
     const newTrack = useAudioStore.getState().currentTrack;
     if (newTrack) {
-      console.log('NEXT: Switching to track:', newTrack.title);
-      await switchToTrack(newTrack, { autoPlay: true });
-      console.log('NEXT: switchToTrack completed');
+      switchToTrack(newTrack, { autoPlay: true }).catch(() => undefined);
     }
   };
 
-  const handlePrevious = async () => {
-    console.log('=== PREVIOUS BUTTON PRESSED ===');
+  const handlePrevious = () => {
     previousTrack(); // Update store state
     const newTrack = useAudioStore.getState().currentTrack;
     if (newTrack) {
-      await switchToTrack(newTrack, { autoPlay: true });
+      switchToTrack(newTrack, { autoPlay: true }).catch(() => undefined);
     }
   };
 
-  const handlePlayPause = async () => {
-    console.log('=== PLAY/PAUSE BUTTON PRESSED ===');
-    console.log('Current status playing:', status?.playing);
-    console.log('Current track:', currentTrack?.title);
-    
-    if (status?.playing) {
-      console.log('Attempting to pause...');
-      const success = await pause();
-      console.log('Pause result:', success);
-    } else {
-      console.log('Attempting to play...');
-      const success = await play();
-      console.log('Play result:', success);
-    }
+  const handlePlayPause = () => {
+    togglePlayPause().catch(() => undefined);
   };
 
   const handleSpeedChange = async () => {
@@ -77,6 +59,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({ isDark = false }
           onPress={handlePrevious}
           style={s`p-3`}
           disabled={!currentTrack}
+          activeOpacity={currentTrack ? 0.8 : 1}
         >
           <Ionicons 
             name="play-skip-back" 
@@ -95,7 +78,8 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({ isDark = false }
             justifyContent: 'center',
             alignItems: 'center'
           }]}
-          disabled={!currentTrack || isBuffering}
+          disabled={!currentTrack}
+          activeOpacity={currentTrack ? 0.85 : 1}
         >
           {isBuffering ? (
             <ActivityIndicator size={30} color="white" />
@@ -113,6 +97,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({ isDark = false }
           onPress={handleNext}
           style={s`p-3`}
           disabled={!currentTrack}
+          activeOpacity={currentTrack ? 0.8 : 1}
         >
           <Ionicons 
             name="play-skip-forward" 

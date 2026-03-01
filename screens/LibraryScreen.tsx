@@ -10,7 +10,8 @@ import { Track, useAudioStore } from '../store/audioStore';
 
 export const LibraryScreen: React.FC = () => {
   const router = useRouter();
-  const { isDarkMode, toggleDarkMode } = useAudioStore();
+  const isDarkMode = useAudioStore((state) => state.isDarkMode);
+  const toggleDarkMode = useAudioStore((state) => state.toggleDarkMode);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [permissionStatus, setPermissionStatus] = useState<MediaLibrary.PermissionStatus>();
@@ -69,6 +70,7 @@ export const LibraryScreen: React.FC = () => {
       if (permission.status === 'granted') {
         await loadMusicFiles();
       } else {
+        setIsLoading(false);
         Alert.alert(
           'Permission Required',
           'AudioVox needs access to your music library to display your local audio files.',
@@ -79,13 +81,12 @@ export const LibraryScreen: React.FC = () => {
         );
       }
     } catch (error) {
-      console.error('Error requesting permissions:', error);
       setIsLoading(false);
       
       // Fall back to demo tracks when media library fails
       Alert.alert(
         'Media Library Unavailable',
-        'Cannot access device media library (Expo Go limitation on Android). Loading bundled audio tracks instead.',
+        'Cannot access device media library. Loading bundled audio tracks instead.',
         [
           { 
             text: 'Use Bundled Tracks', 
@@ -108,26 +109,23 @@ export const LibraryScreen: React.FC = () => {
         sortBy: ['creationTime'],
       });
 
-      const audioTracks: Track[] = await Promise.all(
-        media.assets.map(async (asset) => {
-          // Get asset info for duration
-          const assetInfo = await MediaLibrary.getAssetInfoAsync(asset);
-          
-          return {
-            id: asset.id,
-            title: asset.filename.replace(/\.[^/.]+$/, ''), // Remove file extension
-            artist: 'Unknown Artist', // MediaLibrary doesn't provide artist info easily
-            duration: (asset.duration || 0) * 1000, // Convert to milliseconds
-            uri: assetInfo.localUri || asset.uri,
-            isLocal: true,
-            mood: 'general',
-          };
-        })
-      );
+      // Process tracks more efficiently without calling getAssetInfoAsync for each
+      const audioTracks: Track[] = media.assets.map((asset) => {
+        return {
+          id: asset.id,
+          title: asset.filename.replace(/\.[^/.]+$/, ''), // Remove file extension
+          artist: 'Unknown Artist', // MediaLibrary doesn't provide artist info easily
+          duration: (asset.duration || 0) * 1000, // Convert to milliseconds
+          uri: asset.uri, // Use direct URI instead of calling getAssetInfoAsync
+          isLocal: true,
+          mood: 'general',
+        };
+      });
 
       setTracks(audioTracks);
+      setIsLoading(false);
     } catch (error) {
-      console.error('Error loading music files:', error);
+      setIsLoading(false);
       Alert.alert(
         'Error',
         'Failed to load music files from your device. Please try again.'
@@ -162,6 +160,7 @@ export const LibraryScreen: React.FC = () => {
 
   const handleRefresh = () => {
     if (permissionStatus === 'granted') {
+      setIsLoading(true);
       loadMusicFiles();
     } else if (usingDemoMode) {
       setTracks(demoTracks);
@@ -349,7 +348,6 @@ export const LibraryScreen: React.FC = () => {
             tracks={filteredTracks}
             isDark={isDarkMode}
             onTrackSelect={(track, index) => {
-              console.log(`Selected track: ${track.title} (navigating to Player tab)`);
               // Move user to the main Player tab so global controls are visible
               router.push('/(tabs)');
             }}

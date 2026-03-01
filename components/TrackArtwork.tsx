@@ -13,7 +13,7 @@ export const TrackArtwork: React.FC<TrackArtworkProps> = ({
   size = 200, 
   isDark = false 
 }) => {
-  const { currentTrack } = useAudioStore();
+  const currentTrack = useAudioStore((state) => state.currentTrack);
 
   return (
     <View style={s`items-center px-6`}>
@@ -36,7 +36,8 @@ export const TrackArtwork: React.FC<TrackArtworkProps> = ({
           style={s`text-2xl font-bold text-center ${
             isDark ? 'text-white' : 'text-gray-900'
           }`}
-          numberOfLines={2}
+          numberOfLines={1}
+          ellipsizeMode="tail"
         >
           {currentTrack?.title || 'No Track Selected'}
         </Text>
@@ -45,6 +46,7 @@ export const TrackArtwork: React.FC<TrackArtworkProps> = ({
             isDark ? 'text-gray-300' : 'text-gray-600'
           }`}
           numberOfLines={1}
+          ellipsizeMode="tail"
         >
           {currentTrack?.artist || 'Unknown Artist'}
         </Text>

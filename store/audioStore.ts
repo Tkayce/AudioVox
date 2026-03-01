@@ -10,6 +10,17 @@ export interface Track {
   mood?: 'worship' | 'study' | 'chill' | 'workout' | 'general';
 }
 
+const arePlaylistsEqual = (a: Track[], b: Track[]): boolean => {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i]?.id !== b[i]?.id) {
+      return false;
+    }
+  }
+  return true;
+};
+
 interface AudioPlayerState {
   // Player state
   currentTrack: Track | null;
@@ -35,7 +46,7 @@ interface AudioPlayerState {
   setCurrentTime: (time: number) => void;
   setDuration: (duration: number) => void;
   setPlaybackRate: (rate: number) => void;
-  setPlaylist: (playlist: Track[]) => void;
+  setPlaylist: (playlist: Track[]) => void;  
   setCurrentIndex: (index: number) => void;
   toggleShuffle: () => void;
   setRepeatMode: (mode: 'off' | 'one' | 'all') => void;
@@ -62,13 +73,13 @@ export const useAudioStore = create<AudioPlayerState>((set, get) => ({
   isDarkMode: true, // Dark mode as default
   
   // Setters
-  setCurrentTrack: (track) => set({ currentTrack: track }),
-  setIsPlaying: (playing) => set({ isPlaying: playing }),
-  setIsBuffering: (buffering) => set({ isBuffering: buffering }),
-  setCurrentTime: (time) => set({ currentTime: time }),
-  setDuration: (duration) => set({ duration: duration }),
+    setCurrentTrack: (track) => set({ currentTrack: track }),
+    setIsPlaying: (playing) => set((state) => (state.isPlaying === playing ? {} : { isPlaying: playing })),
+    setIsBuffering: (buffering) => set((state) => (state.isBuffering === buffering ? {} : { isBuffering: buffering })),
+    setCurrentTime: (time) => set((state) => (state.currentTime === time ? {} : { currentTime: time })),
+    setDuration: (duration) => set((state) => (state.duration === duration ? {} : { duration })),
   setPlaybackRate: (rate) => set({ playbackRate: rate }),
-  setPlaylist: (playlist) => set({ playlist: playlist }),
+    setPlaylist: (playlist) => set((state) => (arePlaylistsEqual(state.playlist, playlist) ? {} : { playlist })),
   setCurrentIndex: (index) => set({ currentIndex: index }),
   toggleShuffle: () => set((state) => ({ isShuffleEnabled: !state.isShuffleEnabled })),
   setRepeatMode: (mode) => set({ repeatMode: mode }),
@@ -90,7 +101,6 @@ export const useAudioStore = create<AudioPlayerState>((set, get) => ({
         const randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
         setCurrentIndex(randomIndex);
         setCurrentTrack(playlist[randomIndex]);
-        console.log('Next track (shuffle):', playlist[randomIndex]?.title);
       }
     } else {
       // Sequential play
@@ -98,14 +108,10 @@ export const useAudioStore = create<AudioPlayerState>((set, get) => ({
         const nextIndex = currentIndex + 1;
         setCurrentIndex(nextIndex);
         setCurrentTrack(playlist[nextIndex]);
-        console.log('Next track:', playlist[nextIndex]?.title);
       } else if (repeatMode === 'all') {
         // Loop back to first track
         setCurrentIndex(0);
         setCurrentTrack(playlist[0]);
-        console.log('Looping to first track:', playlist[0]?.title);
-      } else {
-        console.log('Already at last track');
       }
     }
   },
@@ -116,14 +122,10 @@ export const useAudioStore = create<AudioPlayerState>((set, get) => ({
       const prevIndex = currentIndex - 1;
       setCurrentIndex(prevIndex);
       setCurrentTrack(playlist[prevIndex]);
-      console.log('Previous track:', playlist[prevIndex]?.title);
-    } else {
-      console.log('Already at first track');
     }
   },
   
   autoPlayNext: () => {
-    console.log('=== AUTO-PLAY NEXT TRIGGERED ===');
     const { nextTrack } = get();
     nextTrack(); // This will update currentTrack and trigger auto-initialization
   },

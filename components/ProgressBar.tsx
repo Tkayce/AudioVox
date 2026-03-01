@@ -1,5 +1,5 @@
 import Slider from '@react-native-community/slider';
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Text, View } from 'react-native';
 import { s } from 'react-native-wind';
 import { useLocalAudio } from '../hooks/useLocalAudio';
@@ -10,11 +10,11 @@ interface ProgressBarProps {
 }
 
 export const ProgressBar: React.FC<ProgressBarProps> = ({ isDark = false }) => {
-  const { currentTime, duration, isPlaying } = useAudioStore();
+  const currentTime = useAudioStore((state) => state.currentTime);
+  const duration = useAudioStore((state) => state.duration);
   const { seekTo } = useLocalAudio();
   const [isDragging, setIsDragging] = useState(false);
-  const [tempValue, setTempValue] = useState(0);
-  const lastSeekRef = useRef<number>(0);
+  const [pendingValue, setPendingValue] = useState(0);
 
   const formatTime = (timeMs: number): string => {
     const totalSeconds = Math.floor(timeMs / 1000);
@@ -24,30 +24,30 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ isDark = false }) => {
   };
 
   const handleValueChange = (value: number) => {
-    const now = Date.now();
-    
-    // Throttle seeking to prevent overlapping audio
-    if (now - lastSeekRef.current < 100) {
-      return;
-    }
-    
-    setTempValue(value);
-    lastSeekRef.current = now;
-    
-    // Debounced seek
-    setTimeout(async () => {
-      const positionMs = Math.floor(value * duration);
-      await seekTo(positionMs);
-    }, 50);
+    setPendingValue(value);
   };
 
-  const progress = duration > 0 ? currentTime / duration : 0;
+  const handleSlidingStart = () => {
+    setIsDragging(true);
+    setPendingValue(duration > 0 ? currentTime / duration : 0);
+  };
+
+  const handleSlidingComplete = async (value: number) => {
+    setIsDragging(false);
+    const positionMs = Math.floor(value * duration);
+    await seekTo(positionMs);
+  };
+
+  const progress = duration > 0 ? Math.min(1, Math.max(0, currentTime / duration)) : 0;
+  const sliderValue = isDragging ? pendingValue : progress;
 
   return (
     <View style={s`px-6 py-4 ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
       <Slider
-        value={progress}
+        value={sliderValue}
         onValueChange={handleValueChange}
+        onSlidingStart={handleSlidingStart}
+        onSlidingComplete={handleSlidingComplete}
         minimumValue={0}
         maximumValue={1}
         minimumTrackTintColor="#e05338"

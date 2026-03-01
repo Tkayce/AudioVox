@@ -10,17 +10,17 @@ import { useLocalAudio } from '../hooks/useLocalAudio';
 import { useAudioStore } from '../store/audioStore';
 
 export const HomeScreen: React.FC = () => {
-  const { 
-    isDarkMode, 
-    toggleDarkMode, 
-    currentTrack, 
-    playbackRate, 
-    isShuffleEnabled, 
-    repeatMode,
-    toggleShuffle,
-    setRepeatMode,
-    setPlaybackRate 
-  } = useAudioStore();
+  const isDarkMode = useAudioStore((state) => state.isDarkMode);
+  const toggleDarkMode = useAudioStore((state) => state.toggleDarkMode);
+  const currentTrack = useAudioStore((state) => state.currentTrack);
+  const isPlaying = useAudioStore((state) => state.isPlaying);
+  const isBuffering = useAudioStore((state) => state.isBuffering);
+  const playbackRate = useAudioStore((state) => state.playbackRate);
+  const setPlaybackRateValue = useAudioStore((state) => state.setPlaybackRate);
+  const isShuffleEnabled = useAudioStore((state) => state.isShuffleEnabled);
+  const toggleShuffle = useAudioStore((state) => state.toggleShuffle);
+  const repeatMode = useAudioStore((state) => state.repeatMode);
+  const setRepeatMode = useAudioStore((state) => state.setRepeatMode);
   const { isPlayerReady, setPlaybackRate: setPlayerRate } = useLocalAudio();
 
   const handleSpeedChange = async () => {
@@ -30,7 +30,7 @@ export const HomeScreen: React.FC = () => {
     const newSpeed = speeds[nextIndex];
 
     // Update global store value for UI and logic
-    setPlaybackRate(newSpeed);
+    setPlaybackRateValue(newSpeed);
 
     // Apply to the underlying audio player if it's ready
     await setPlayerRate(newSpeed);
@@ -100,7 +100,7 @@ export const HomeScreen: React.FC = () => {
         {/* Track Artwork */}
         <View style={s`mt-8 mb-6`}>
           <TrackArtwork 
-            size={250} 
+            size={150} 
             isDark={isDarkMode} 
           />
         </View>
@@ -161,19 +161,16 @@ export const HomeScreen: React.FC = () => {
           <View style={s`items-center mt-8 px-6`}>
             <Ionicons 
               name="library" 
-              size={48} 
+              size={20} 
               color={isDarkMode ? '#6b7280' : '#9ca3af'} 
             />
-            <Text style={s`text-lg font-semibold mt-4 text-center ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            <Text style={s`text-lg font-semibold text-center ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
               No Music Selected
-            </Text>
-            <Text style={s`text-sm text-center mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-              Go to your Library to choose music to play
             </Text>
           </View>
         )}
 
-        {currentTrack && !isPlayerReady && (
+        {currentTrack && !isPlaying && (!isPlayerReady() || isBuffering) && (
           <View style={s`items-center mt-4`}>
             <Ionicons 
               name="information-circle" 
